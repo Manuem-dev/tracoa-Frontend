@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F2EAD3;
+  --foreground: #3D1F0A;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  
+  --color-tracao-cream: #F2EAD3;
+  --color-tracao-cream-light: #FAF5E9;
+  --color-tracao-cream-mid: #E8DCC0;
+  
+  --color-tracao-gold: #F5D78A;
+  --color-tracao-gold-dark: #D4A846;
+  
+  --color-tracao-choco: #3D1F0A;
+  --color-tracao-choco-mid: #5C3010;
+  --color-tracao-choco-light: #8B5E35;
+  --color-tracao-choco-pale: #C49A6C;
+  
+  --color-tracao-cacao: #7B3F00;
+  
+  --color-tracao-rust: #B85C28;
+  --color-tracao-rust-light: #F0D5C0;
+  
+  --color-tracao-forest: #2C4A1E;
+  --color-tracao-forest-light: #D4E8C8;
+  
+  --color-tracao-border: #DDD0B3;
+  --color-tracao-border-light: #EDE4CC;
+  
+  --color-tracao-error: #8B2000;
+  --color-tracao-error-light: #F9DDD3;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
