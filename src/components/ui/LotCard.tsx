@@ -12,8 +12,9 @@ export function LotCard({ lot }: { lot: Lot }) {
   });
 
   let badgeType: 'success' | 'warning' | 'error' | 'info' | 'neutral' = 'neutral';
-  if (lot.statut === 'eudrConforme') badgeType = 'success';
-  if (lot.statut === 'enregistre') badgeType = 'warning';
+  if (lot.statut === 'eudrConforme' || lot.statut === 'valide') badgeType = 'success';
+  if (lot.statut === 'enregistre' || lot.statut === 'en_attente_coop') badgeType = 'warning';
+  if (lot.statut === 'rejete') badgeType = 'error';
   if (lot.statut === 'transfere' || lot.statut === 'enTransformation') badgeType = 'info';
 
   const hasPhoto = !!lot.photoPath;
@@ -68,8 +69,8 @@ export function LotCard({ lot }: { lot: Lot }) {
       <div className="px-4 py-3 flex justify-between items-center">
         <div className="flex gap-5">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase text-tracao-choco-pale font-semibold">Poids</span>
-            <span className="text-base font-black text-tracao-cacao">{lot.poidsKg} kg</span>
+            <span className="text-[10px] uppercase text-tracao-choco-pale font-bold tracking-wide">Poids</span>
+            <span className="text-xl lg:text-2xl font-black text-tracao-cacao leading-none">{lot.poidsKg} <span className="text-sm">kg</span></span>
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] uppercase text-tracao-choco-pale font-semibold">Date</span>
@@ -86,6 +87,14 @@ export function LotCard({ lot }: { lot: Lot }) {
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </div>
       </div>
+
+      {/* Motif de rejet */}
+      {lot.statut === 'rejete' && lot.motifRejet && (
+        <div className="bg-tracao-error/10 px-4 py-3 border-t border-tracao-error/20 flex flex-col">
+          <span className="text-[10px] uppercase text-tracao-error font-black">Motif du refus</span>
+          <span className="text-sm font-semibold text-tracao-error/90 mt-0.5">{lot.motifRejet}</span>
+        </div>
+      )}
     </Link>
   );
 }

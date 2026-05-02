@@ -18,8 +18,10 @@ export default function DashboardScreen() {
   useEffect(() => {
     if (!estConnecte) {
       router.push("/login");
+    } else if (agriculteur?.secteur === "Coopérative") {
+      router.push("/cooperative");
     }
-  }, [estConnecte, router]);
+  }, [estConnecte, agriculteur, router]);
 
   if (!agriculteur) return null;
 

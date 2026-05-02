@@ -9,6 +9,8 @@ import { Button } from "../../components/ui/Button";
 import { ArrowLeftIcon, MapPinIcon, CameraIcon, XIcon, UploadCloudIcon, ImageIcon } from "lucide-react";
 import { uploadToCloudinary } from "../../lib/cloudinary";
 import { NotificationService } from "../../lib/notifications";
+import { db } from "../../lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 export default function NouveauLotScreen() {
   const router = useRouter();
@@ -18,6 +20,8 @@ export default function NouveauLotScreen() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCooperativeId, setSelectedCooperativeId] = useState<string | null>(null);
+  const [availableCooperatives, setAvailableCooperatives] = useState<any[]>([]);
+  const [isLoadingCoops, setIsLoadingCoops] = useState(false);
 
   // Form state
   const [typeProduit, setTypeProduit] = useState<TypeProduit | null>(null);
@@ -45,6 +49,41 @@ export default function NouveauLotScreen() {
     }
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
+  }, []);
+
+  // --- Fetch Cooperatives when component mounts ---
+  useEffect(() => {
+    const fetchCoops = async () => {
+      setIsLoadingCoops(true);
+      try {
+        const q = query(collection(db, "agriculteurs"), where("secteur", "==", "Coopérative"));
+        const snapshot = await getDocs(q);
+        const coops: any[] = [];
+        snapshot.forEach((doc) => {
+          coops.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Fallback default coop if empty
+        if (coops.length === 0) {
+          coops.push({
+            id: "default-coop",
+            nom: "Coopérative Agri-Togo",
+            region: "Plateaux",
+          });
+        }
+        setAvailableCooperatives(coops);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des coopératives", error);
+        setAvailableCooperatives([{
+          id: "default-coop",
+          nom: "Coopérative Agri-Togo",
+          region: "Plateaux",
+        }]);
+      } finally {
+        setIsLoadingCoops(false);
+      }
+    };
+    fetchCoops();
   }, []);
 
   // --- Paste anywhere on the page (Ctrl+V / Cmd+V) ---
@@ -478,50 +517,55 @@ export default function NouveauLotScreen() {
             </div>
 
             <div className="space-y-3">
-              {(() => {
-                const { MOCK_COOPERATIVES } = require("../../lib/mockData");
-                const filtered = MOCK_COOPERATIVES.filter((c: any) => 
-                  !agriculteur.region || c.region === agriculteur.region
-                );
-                
-                if (filtered.length === 0) {
-                  return (
-                    <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-tracao-border text-tracao-choco-pale">
-                      <p className="text-sm font-bold">Aucune coopérative trouvée dans votre zone.</p>
-                      <p className="text-xs mt-1">Vous pouvez enregistrer le lot sans coopérative pour le moment.</p>
-                    </div>
+              {isLoadingCoops ? (
+                <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-tracao-border text-tracao-choco-pale">
+                  <p className="text-sm font-bold">Recherche des coopératives...</p>
+                </div>
+              ) : (
+                (() => {
+                  const filtered = availableCooperatives.filter((c: any) => 
+                    !agriculteur.region || !c.region || c.region === agriculteur.region || c.id === 'default-coop'
                   );
-                }
+                  
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-tracao-border text-tracao-choco-pale">
+                        <p className="text-sm font-bold">Aucune coopérative trouvée dans votre zone.</p>
+                        <p className="text-xs mt-1">Vous pouvez enregistrer le lot sans coopérative pour le moment.</p>
+                      </div>
+                    );
+                  }
 
-                return filtered.map((coop: any) => (
-                  <button
-                    key={coop.id}
-                    onClick={() => setSelectedCooperativeId(coop.id)}
-                    className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${
-                      selectedCooperativeId === coop.id 
-                      ? 'bg-white border-tracao-cacao shadow-md' 
-                      : 'bg-tracao-cream-light border-transparent hover:bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-tracao-cream-mid flex items-center justify-center text-tracao-cacao font-black">
-                        {coop.nom.charAt(0)}
+                  return filtered.map((coop: any) => (
+                    <button
+                      key={coop.id}
+                      onClick={() => setSelectedCooperativeId(coop.id)}
+                      className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${
+                        selectedCooperativeId === coop.id 
+                        ? 'bg-white border-tracao-cacao shadow-md' 
+                        : 'bg-tracao-cream-light border-transparent hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-tracao-cream-mid flex items-center justify-center text-tracao-cacao font-black">
+                          {coop.nom ? coop.nom.charAt(0) : "C"}
+                        </div>
+                        <div className="text-left">
+                          <p className={`font-bold text-sm ${selectedCooperativeId === coop.id ? 'text-tracao-cacao' : 'text-tracao-choco'}`}>
+                            {coop.nom || "Coopérative Sans Nom"}
+                          </p>
+                          <p className="text-[10px] text-tracao-choco-pale uppercase font-semibold">{coop.region || "Togo"}</p>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <p className={`font-bold text-sm ${selectedCooperativeId === coop.id ? 'text-tracao-cacao' : 'text-tracao-choco'}`}>
-                          {coop.nom}
-                        </p>
-                        <p className="text-[10px] text-tracao-choco-pale uppercase font-semibold">{coop.region}</p>
-                      </div>
-                    </div>
-                    {selectedCooperativeId === coop.id && (
-                      <div className="w-6 h-6 bg-tracao-cacao text-white rounded-full flex items-center justify-center">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      </div>
-                    )}
-                  </button>
-                ));
-              })()}
+                      {selectedCooperativeId === coop.id && (
+                        <div className="w-6 h-6 bg-tracao-cacao text-white rounded-full flex items-center justify-center">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                      )}
+                    </button>
+                  ));
+                })()
+              )}
             </div>
 
             <div className="mt-10 space-y-4">

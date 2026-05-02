@@ -1,6 +1,6 @@
 export type TypeProduit = 'cacao' | 'cafe';
 
-export type LotStatut = 'enregistre' | 'transfere' | 'enTransformation' | 'exporte' | 'eudrConforme';
+export type LotStatut = 'en_attente_coop' | 'valide' | 'rejete' | 'enregistre' | 'transfere' | 'enTransformation' | 'exporte' | 'eudrConforme';
 
 export type KycStatut = 'non_soumis' | 'en_attente' | 'verifie' | 'rejete';
 
@@ -37,6 +37,7 @@ export interface Lot {
   notesQualite?: string;
   blockchainTxHash?: string;
   syncBlockchain: boolean;
+  motifRejet?: string;
 }
 
 export interface Cooperative {
@@ -82,6 +83,9 @@ export const getTypeProduitEmoji = (type: TypeProduit): string => {
 
 export const getLotStatutLabel = (statut: LotStatut): string => {
   switch (statut) {
+    case 'en_attente_coop': return 'En attente Coopérative';
+    case 'valide': return 'Validé (Blockchain)';
+    case 'rejete': return 'Rejeté';
     case 'enregistre': return 'Enregistré';
     case 'transfere': return 'Transféré';
     case 'enTransformation': return 'En transformation';
