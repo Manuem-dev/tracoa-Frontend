@@ -1,0 +1,38 @@
+ Environnement virtuel Python
+venv/
+env/
+.venv/
+.env/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Base de données SQLite (fichier local)
+db.sqlite3
+*.db
+
+# Médias uploadés (volumineux, spécifiques à l'environnement)
+media/
+staticfiles/
+
+# ⚠️ Fichiers sensibles (mots de passe, clés API)
+.env
+*.env
+.env.local
+.env.production
+
+# Configuration spécifique à l'environnement
+local_settings.py
+settings_local.py
+
+# Fichiers IDE et éditeur
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
