@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Lot, LotStatut, TypeProduit } from '../types';
+import { collection, getDocs, query, where, setDoc, doc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 interface LotsContextType {
   lots: Lot[];
@@ -14,7 +16,7 @@ interface LotsContextType {
   lotsSyncronises: number;
   lotsRecents: Lot[];
   ajouterLot: (params: Omit<Lot, 'id' | 'lotId' | 'dateEnregistrement' | 'statut' | 'syncBlockchain'>) => Promise<Lot>;
-  chargerDonneesDemo: (agriculteurId: string) => void;
+  chargerDonneesDemo: (agriculteurId: string) => Promise<void>;
   trouverParId: (lotId: string) => Lot | undefined;
 }
 
@@ -29,11 +31,7 @@ export const LotsProvider = ({ children }: { children: ReactNode }) => {
     const saved = localStorage.getItem('tracao_lots');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved).map((l: any) => ({
-          ...l,
-          dateRecolte: new Date(l.dateRecolte),
-          dateEnregistrement: new Date(l.dateEnregistrement)
-        }));
+        const parsed = JSON.parse(saved);
         setLots(parsed);
       } catch (e) {
         console.error(e);
@@ -58,11 +56,9 @@ export const LotsProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      // Simulate network/blockchain delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-
+      const lotRef = doc(collection(db, "lots"));
       const lot: Lot = {
-        id: crypto.randomUUID(),
+        id: lotRef.id,
         lotId: genererLotId(),
         agriculteurId: params.agriculteurId,
         typeProduit: params.typeProduit,
@@ -70,7 +66,7 @@ export const LotsProvider = ({ children }: { children: ReactNode }) => {
         latitude: params.latitude,
         longitude: params.longitude,
         dateRecolte: params.dateRecolte,
-        dateEnregistrement: new Date(),
+        dateEnregistrement: new Date().toISOString(),
         statut: 'enregistre',
         photoPath: params.photoPath,
         notesQualite: params.notesQualite,
@@ -78,6 +74,7 @@ export const LotsProvider = ({ children }: { children: ReactNode }) => {
         syncBlockchain: true,
       };
 
+      await setDoc(lotRef, lot);
       setLots(prev => [lot, ...prev]);
       return lot;
     } catch (e: any) {
@@ -88,59 +85,19 @@ export const LotsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const chargerDonneesDemo = (agriculteurId: string) => {
-    const now = new Date();
-    
-    const threeDaysAgo = new Date(now); threeDaysAgo.setDate(now.getDate() - 3);
-    const fiveDaysAgo = new Date(now); fiveDaysAgo.setDate(now.getDate() - 5);
-    const twelveDaysAgo = new Date(now); twelveDaysAgo.setDate(now.getDate() - 12);
-
-    const demoLots: Lot[] = [
-      {
-        id: crypto.randomUUID(),
-        lotId: 'LOT-2026-0042',
-        agriculteurId,
-        typeProduit: 'cacao',
-        poidsKg: 280,
-        latitude: 6.1296,
-        longitude: 1.2254,
-        dateRecolte: threeDaysAgo,
-        dateEnregistrement: threeDaysAgo,
-        statut: 'transfere',
-        blockchainTxHash: '0x18429011a3f7b',
-        syncBlockchain: true,
-      },
-      {
-        id: crypto.randomUUID(),
-        lotId: 'LOT-2026-0039',
-        agriculteurId,
-        typeProduit: 'cacao',
-        poidsKg: 195,
-        latitude: 6.1312,
-        longitude: 1.2198,
-        dateRecolte: fiveDaysAgo,
-        dateEnregistrement: fiveDaysAgo,
-        statut: 'enregistre',
-        blockchainTxHash: '0x18428542c1d9e',
-        syncBlockchain: true,
-      },
-      {
-        id: crypto.randomUUID(),
-        lotId: 'LOT-2026-0031',
-        agriculteurId,
-        typeProduit: 'cafe',
-        poidsKg: 410,
-        latitude: 6.1089,
-        longitude: 1.2411,
-        dateRecolte: twelveDaysAgo,
-        dateEnregistrement: twelveDaysAgo,
-        statut: 'eudrConforme',
-        blockchainTxHash: '0x18421337f4a2c',
-        syncBlockchain: true,
-      }
-    ];
-
-    setLots(demoLots);
+  const chargerDonneesDemo = async (agriculteurId: string) => {
+    try {
+      const q = query(collection(db, "lots"), where("agriculteurId", "==", agriculteurId));
+      const querySnapshot = await getDocs(q);
+      const fetchedLots: Lot[] = [];
+      querySnapshot.forEach((document) => {
+        fetchedLots.push(document.data() as Lot);
+      });
+      
+      setLots(fetchedLots.sort((a, b) => new Date(b.dateEnregistrement).getTime() - new Date(a.dateEnregistrement).getTime()));
+    } catch (e) {
+      console.error("Erreur lors de la récupération des lots :", e);
+    }
   };
 
   const trouverParId = (lotId: string) => {

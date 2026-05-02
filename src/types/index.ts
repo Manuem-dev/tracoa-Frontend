@@ -6,9 +6,11 @@ export interface Agriculteur {
   id: string;
   nom: string;
   prenom: string;
-  telephone: string;
-  region: string;
-  cooperative: string;
+  email?: string;
+  secteur?: string;
+  telephone?: string;
+  region?: string;
+  cooperative?: string;
   certifie: boolean;
 }
 

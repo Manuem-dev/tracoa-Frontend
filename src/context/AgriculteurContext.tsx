@@ -1,13 +1,17 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter, usePathname } from "next/navigation";
 import { Agriculteur } from '../types';
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { db, auth } from "../lib/firebase";
 
 interface AgriculteurContextType {
   agriculteur: Agriculteur | null;
   estConnecte: boolean;
-  connecter: (agri: Agriculteur) => void;
-  deconnecter: () => void;
+  connecter: (agri: Agriculteur) => Promise<void>;
+  deconnecter: () => Promise<void>;
 }
 
 const AgriculteurContext = createContext<AgriculteurContextType | undefined>(undefined);
@@ -15,30 +19,62 @@ const AgriculteurContext = createContext<AgriculteurContextType | undefined>(und
 export const AgriculteurProvider = ({ children }: { children: ReactNode }) => {
   const [agriculteur, setAgriculteur] = useState<Agriculteur | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    const saved = localStorage.getItem('tracao_agriculteur');
-    if (saved) {
-      try {
-        setAgriculteur(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse agriculteur from local storage", e);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const docSnap = await getDoc(doc(db, "agriculteurs", user.uid));
+          if (docSnap.exists()) {
+            setAgriculteur(docSnap.data() as Agriculteur);
+          } else {
+            // Unlikely to have user but no profile unless they just signed up via Google and handleAuthSuccess hasn't finished.
+            // We just wait, since handleAuthSuccess will call connecter() anyway.
+          }
+        } catch (e) {
+          console.error("Error fetching profile:", e);
+        }
+      } else {
+        setAgriculteur(null);
       }
-    }
-    setIsLoaded(true);
+      setIsLoaded(true);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const connecter = (agri: Agriculteur) => {
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    const isPublicPath = pathname === '/login' || pathname === '/register';
+    
+    if (!agriculteur && !isPublicPath) {
+      router.replace('/login');
+    } else if (agriculteur && isPublicPath) {
+      router.replace('/');
+    }
+  }, [agriculteur, isLoaded, pathname, router]);
+
+  const connecter = async (agri: Agriculteur) => {
     setAgriculteur(agri);
-    localStorage.setItem('tracao_agriculteur', JSON.stringify(agri));
+    try {
+      await setDoc(doc(db, "agriculteurs", agri.id), agri);
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde dans Firebase:", error);
+    }
   };
 
-  const deconnecter = () => {
+  const deconnecter = async () => {
+    await signOut(auth);
     setAgriculteur(null);
-    localStorage.removeItem('tracao_agriculteur');
+    router.replace('/login');
   };
 
-  if (!isLoaded) return null; // Wait for hydration
+  if (!isLoaded) {
+    return <div className="flex items-center justify-center min-h-screen bg-tracao-cream text-tracao-cacao font-bold text-xl h-full w-full">Chargement...</div>;
+  }
 
   return (
     <AgriculteurContext.Provider value={{
