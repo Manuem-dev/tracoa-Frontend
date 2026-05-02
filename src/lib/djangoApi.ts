@@ -1,6 +1,6 @@
 import { Agriculteur, Lot } from "../types";
 
-const DJANGO_API_BASE = "http://127.0.0.1:8000/api";
+const DJANGO_API_BASE = process.env.NEXT_PUBLIC_DJANGO_API_BASE || "http://127.0.0.1:8000/api";
 
 /**
  * Enregistre silencieusement un utilisateur Firebase dans Django (Agriculteur ou Coopérative)
@@ -20,25 +20,24 @@ export const syncUserToDjango = async (user: Agriculteur): Promise<number | null
       cooperative_name: user.secteur === "Coopérative" ? (user.nom + " " + user.prenom) : ""
     };
 
+    console.log("Tentative de synchronisation vers :", `${DJANGO_API_BASE}${endpoint}`);
     const res = await fetch(`${DJANGO_API_BASE}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
+    console.log("Réponse Django status:", res.status);
+
     if (!res.ok) {
       const errorText = await res.text();
-      // Si l'utilisateur existe déjà (email unique), on devrait idéalement faire un GET pour récupérer son ID.
-      // Pour le hackathon, on suppose que l'API renvoie l'utilisateur s'il existe (ou on gère l'erreur).
-      console.warn("Erreur ou utilisateur existant côté Django:", errorText);
-      // NOTE: En production, il faudrait un endpoint GET /users/by_email pour récupérer l'ID
+      console.warn("Erreur côté Django:", errorText);
     }
 
-    // Le backend renvoie le user_model (ProducerList ou CooperativeList) avec le champ 'id'
     const data = await res.json();
     return data.id || null;
   } catch (err) {
-    console.error("Impossible de synchroniser l'utilisateur avec Django:", err);
+    console.error("ERREUR CONNEXION DJANGO:", err);
     return null;
   }
 };
