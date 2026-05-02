@@ -14,22 +14,25 @@ class UserController:
     @route.post("/producer_signup",response = ProducerList)
     def register_producer(self,user:ProducerTransporterRegister):
         user_data = user.model_dump()
-        user_data['is_producer'] = True
-        user_model = User.objects.create(**user_data)
+        email = user_data.get('email')
+        user_model, created = User.objects.get_or_create(email=email, defaults={**user_data, 'is_producer': True})
+        if not created:
+            # Update fields if necessary, or just return existing
+            pass
         return user_model
         
     @route.post("/transporter_signup",response = TransporterList)
     def register_transporter(self,user:ProducerTransporterRegister):
         user_data = user.model_dump()
-        user_data['is_transporter'] = True
-        user_model = User.objects.create(**user_data)
+        email = user_data.get('email')
+        user_model, created = User.objects.get_or_create(email=email, defaults={**user_data, 'is_transporter': True})
         return user_model
 
     @route.post("/cooperative_signup",response = CooperativeList)
     def register_cooperative(self,user:CooperativeRegister):
         user_data = user.model_dump()
-        user_data['is_cooperative_source'] = True
-        user_model = User.objects.create(**user_data)
+        email = user_data.get('email')
+        user_model, created = User.objects.get_or_create(email=email, defaults={**user_data, 'is_cooperative_source': True})
         return user_model
 
     @route.get("/all_producers",response = list[ProducerList])
