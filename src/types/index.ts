@@ -2,6 +2,8 @@ export type TypeProduit = 'cacao' | 'cafe';
 
 export type LotStatut = 'enregistre' | 'transfere' | 'enTransformation' | 'exporte' | 'eudrConforme';
 
+export type KycStatut = 'non_soumis' | 'en_attente' | 'verifie' | 'rejete';
+
 export interface Agriculteur {
   id: string;
   nom: string;
@@ -12,12 +14,18 @@ export interface Agriculteur {
   region?: string;
   cooperative?: string;
   certifie: boolean;
+  photoUrl?: string;           // URL Cloudinary de la photo de profil
+  kycStatut?: KycStatut;       // Statut de la vérification KYC
+  kycDocumentUrl?: string;     // URL recto de la pièce d'identité
+  kycDocumentVersoUrl?: string;// URL verso de la pièce d'identité
+  kycSoumisLe?: string;        // ISO date de soumission KYC
 }
 
 export interface Lot {
   id: string;
   lotId: string; // ex: LOT-2026-0042
   agriculteurId: string;
+  cooperativeId?: string; // ID de la coopérative choisie
   typeProduit: TypeProduit;
   poidsKg: number;
   latitude: number;
@@ -29,6 +37,29 @@ export interface Lot {
   notesQualite?: string;
   blockchainTxHash?: string;
   syncBlockchain: boolean;
+}
+
+export interface Cooperative {
+  id: string;
+  nom: string;
+  region: string;
+  contactEmail?: string;
+  contactTel?: string;
+  logo?: string;
+}
+
+export interface Notification {
+  id: string;
+  destinataireId: string; // ID de la coopérative
+  type: 'demande_reception' | 'info';
+  date: Date | string;
+  lu: boolean;
+  message: string;
+  metadata?: {
+    lotId: string;
+    agriculteurId: string;
+    agriculteurNom: string;
+  };
 }
 
 export interface EtapeTransfert {

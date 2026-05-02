@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAgriculteur } from "../context/AgriculteurContext";
 import { useLots } from "../context/LotsContext";
 import { LotCard } from "../components/ui/LotCard";
-import { PlusCircleIcon, QrCodeIcon, ListIcon, BarChart2Icon, HelpCircleIcon, CheckCircle2Icon, TrendingUpIcon } from "lucide-react";
+import { PlusCircleIcon, QrCodeIcon, ListIcon, BarChart2Icon, HelpCircleIcon, CheckCircle2Icon, TrendingUpIcon, BellIcon } from "lucide-react";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -34,11 +34,21 @@ export default function DashboardScreen() {
         <div className="flex justify-between items-start mb-6">
           <div>
             <p className="text-xs text-white/50 uppercase tracking-widest font-semibold mb-1">{dateStr}</p>
-            <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Bonjour, {agriculteur.prenom} 👋</h1>
+            <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Bonjour, {agriculteur.prenom} <span className="animate-wave inline-block">👋</span></h1>
             <p className="text-xs text-white/60 mt-1 capitalize">{agriculteur.secteur || agriculteur.region || "Agriculteur"}</p>
           </div>
-          <div className="w-11 h-11 rounded-full bg-tracao-gold flex items-center justify-center text-tracao-choco font-black text-lg shadow-md">
-            {agriculteur.prenom.charAt(0).toUpperCase()}
+          <div className="flex items-center gap-3">
+            <Link href="/profil" className="relative p-2.5 bg-white/10 rounded-full hover:bg-white/20 transition-colors cursor-pointer">
+              <BellIcon size={20} className="text-white" />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-tracao-error rounded-full border-2 border-tracao-cacao"></span>
+            </Link>
+            <Link href="/profil" className="w-11 h-11 rounded-full bg-tracao-gold flex items-center justify-center text-tracao-choco font-black text-lg shadow-md cursor-pointer overflow-hidden hover:scale-105 transition-transform">
+              {agriculteur.photoUrl ? (
+                <img src={agriculteur.photoUrl} alt="Profil" className="w-full h-full object-cover" />
+              ) : (
+                agriculteur.prenom.charAt(0).toUpperCase()
+              )}
+            </Link>
           </div>
         </div>
 
@@ -103,8 +113,8 @@ export default function DashboardScreen() {
               <p className="text-xs text-tracao-choco-pale mt-1">Appuyez sur "Nouveau lot" pour commencer.</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
-              {lotsRecents.map(lot => (
+            <div className="flex flex-col gap-2 overflow-hidden">
+              {lotsRecents.slice(0, 1).map(lot => (
                 <LotCard key={lot.id} lot={lot} />
               ))}
             </div>

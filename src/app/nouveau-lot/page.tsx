@@ -8,6 +8,7 @@ import { TypeProduit } from "../../types";
 import { Button } from "../../components/ui/Button";
 import { ArrowLeftIcon, MapPinIcon, CameraIcon, XIcon, UploadCloudIcon, ImageIcon } from "lucide-react";
 import { uploadToCloudinary } from "../../lib/cloudinary";
+import { NotificationService } from "../../lib/notifications";
 
 export default function NouveauLotScreen() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function NouveauLotScreen() {
 
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCooperativeId, setSelectedCooperativeId] = useState<string | null>(null);
 
   // Form state
   const [typeProduit, setTypeProduit] = useState<TypeProduit | null>(null);
@@ -86,7 +88,7 @@ export default function NouveauLotScreen() {
   if (!agriculteur) return null;
 
   const handleNext = () => {
-    if (step < 4) setStep(step + 1);
+    if (step < 5) setStep(step + 1);
   };
 
   const handleBack = () => {
@@ -168,6 +170,7 @@ export default function NouveauLotScreen() {
 
       const newLot = await ajouterLot({
         agriculteurId: agriculteur.id,
+        cooperativeId: selectedCooperativeId || undefined,
         typeProduit: typeProduit,
         poidsKg: parseFloat(poidsKg),
         latitude: gpsCoords.lat,
@@ -176,6 +179,22 @@ export default function NouveauLotScreen() {
         notesQualite: notes,
         photoPath: photoUrl,
       });
+
+      // Send local/push notification
+      await NotificationService.sendLocalNotification(
+        "Lot Enregistré",
+        `Le lot ${newLot.lotId} a été créé et scellé avec succès.`
+      );
+
+      // Simulate email notification if farmer has email
+      if (agriculteur.email) {
+        await NotificationService.sendEmail(
+          agriculteur.email,
+          "Confirmation d'enregistrement - Tracao",
+          `Bonjour ${agriculteur.prenom}, votre lot <strong>${newLot.lotId}</strong> a été enregistré sur la blockchain.`
+        );
+      }
+
       router.push(`/nouveau-lot/confirmation?id=${newLot.lotId}`);
     } catch (e) {
       console.error(e);
@@ -197,7 +216,7 @@ export default function NouveauLotScreen() {
       <div className="flex h-1.5 bg-tracao-cream-mid">
         <div 
           className="h-full bg-tracao-gold transition-all duration-300"
-          style={{ width: `${(step / 4) * 100}%` }}
+          style={{ width: `${(step / 5) * 100}%` }}
         />
       </div>
 
@@ -386,7 +405,7 @@ export default function NouveauLotScreen() {
                   <img
                     src={photoPreview}
                     alt="Aperçu du lot"
-                    className="w-full h-52 object-cover"
+                    className="w-full h-40 object-cover"
                   />
                   {/* Overlay gradient */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -441,10 +460,83 @@ export default function NouveauLotScreen() {
               </p>
             </div>
             
-            <div className="mt-6">
+            <div className="mt-8">
+              <Button fullWidth onClick={handleNext}>Continuer</Button>
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="animate-in slide-in-from-right pb-10">
+            <h2 className="text-xl font-bold text-tracao-choco mb-2">Choisir une coopérative</h2>
+            <p className="text-sm text-tracao-choco-light mb-4">Étape 5 sur 5</p>
+            
+            <div className="bg-tracao-cream-mid p-4 rounded-xl border border-tracao-border mb-6">
+              <p className="text-[11px] text-tracao-choco leading-relaxed">
+                Sélectionnez la coopérative qui recevra ce lot. Nous proposons les coopératives disponibles dans votre région (**{agriculteur.region || "Togo"}**).
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {(() => {
+                const { MOCK_COOPERATIVES } = require("../../lib/mockData");
+                const filtered = MOCK_COOPERATIVES.filter((c: any) => 
+                  !agriculteur.region || c.region === agriculteur.region
+                );
+                
+                if (filtered.length === 0) {
+                  return (
+                    <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-tracao-border text-tracao-choco-pale">
+                      <p className="text-sm font-bold">Aucune coopérative trouvée dans votre zone.</p>
+                      <p className="text-xs mt-1">Vous pouvez enregistrer le lot sans coopérative pour le moment.</p>
+                    </div>
+                  );
+                }
+
+                return filtered.map((coop: any) => (
+                  <button
+                    key={coop.id}
+                    onClick={() => setSelectedCooperativeId(coop.id)}
+                    className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${
+                      selectedCooperativeId === coop.id 
+                      ? 'bg-white border-tracao-cacao shadow-md' 
+                      : 'bg-tracao-cream-light border-transparent hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-tracao-cream-mid flex items-center justify-center text-tracao-cacao font-black">
+                        {coop.nom.charAt(0)}
+                      </div>
+                      <div className="text-left">
+                        <p className={`font-bold text-sm ${selectedCooperativeId === coop.id ? 'text-tracao-cacao' : 'text-tracao-choco'}`}>
+                          {coop.nom}
+                        </p>
+                        <p className="text-[10px] text-tracao-choco-pale uppercase font-semibold">{coop.region}</p>
+                      </div>
+                    </div>
+                    {selectedCooperativeId === coop.id && (
+                      <div className="w-6 h-6 bg-tracao-cacao text-white rounded-full flex items-center justify-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      </div>
+                    )}
+                  </button>
+                ));
+              })()}
+            </div>
+
+            <div className="mt-10 space-y-4">
               <Button fullWidth onClick={handleSubmit} disabled={isSubmitting}>
-                {isUploadingPhoto ? "Upload de la photo..." : isSubmitting ? "Enregistrement..." : "Enregistrer et sceller le lot"}
+                {isUploadingPhoto ? "Upload de la photo..." : isSubmitting ? "Enregistrement..." : "Enregistrer et notifier la coopérative"}
               </Button>
+              <button 
+                onClick={() => {
+                  setSelectedCooperativeId(null);
+                  handleSubmit();
+                }}
+                className="w-full py-3 text-xs text-tracao-choco-pale font-bold hover:text-tracao-cacao transition-colors"
+              >
+                Continuer sans coopérative
+              </button>
             </div>
           </div>
         )}

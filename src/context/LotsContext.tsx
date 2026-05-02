@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Lot, LotStatut, TypeProduit } from '../types';
+import { Lot, LotStatut, TypeProduit, Notification, Cooperative } from '../types';
 import { collection, getDocs, query, where, setDoc, doc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
@@ -61,6 +61,7 @@ export const LotsProvider = ({ children }: { children: ReactNode }) => {
         id: lotRef.id,
         lotId: genererLotId(),
         agriculteurId: params.agriculteurId,
+        cooperativeId: params.cooperativeId,
         typeProduit: params.typeProduit,
         poidsKg: params.poidsKg,
         latitude: params.latitude,
@@ -75,6 +76,26 @@ export const LotsProvider = ({ children }: { children: ReactNode }) => {
       };
 
       await setDoc(lotRef, lot);
+
+      // Create notification for the cooperative if one was selected
+      if (params.cooperativeId) {
+        const notifRef = doc(collection(db, "notifications"));
+        const notification: Notification = {
+          id: notifRef.id,
+          destinataireId: params.cooperativeId,
+          type: 'demande_reception',
+          date: new Date().toISOString(),
+          lu: false,
+          message: `Nouveau lot enregistré par un agriculteur. Lot ID: ${lot.lotId}`,
+          metadata: {
+            lotId: lot.lotId,
+            agriculteurId: params.agriculteurId,
+            agriculteurNom: "Agriculteur", // We could pass this in too
+          }
+        };
+        await setDoc(notifRef, notification);
+      }
+
       setLots(prev => [lot, ...prev]);
       return lot;
     } catch (e: any) {

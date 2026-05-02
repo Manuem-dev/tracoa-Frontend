@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, ListIcon, PlusCircleIcon, SettingsIcon, LogOutIcon } from "lucide-react";
+import { HomeIcon, ListIcon, PlusCircleIcon, SettingsIcon, LogOutIcon, HistoryIcon } from "lucide-react";
 import { useAgriculteur } from "../../context/AgriculteurContext";
 
 const navItems = [
   { href: "/", icon: HomeIcon, label: "Accueil" },
   { href: "/nouveau-lot", icon: PlusCircleIcon, label: "Nouveau Lot" },
+  { href: "/suivi", icon: HistoryIcon, label: "Suivi des Lots" },
   { href: "/mes-lots", icon: ListIcon, label: "Mes Lots" },
   { href: "/profil", icon: SettingsIcon, label: "Profil" },
 ];
@@ -23,10 +24,9 @@ export function SideNav() {
       {/* Logo */}
       <div className="px-6 py-8 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">🍫</span>
+          <img src="/icon-192.png" alt="Tracao Logo" className="w-8 h-8 object-contain" />
           <div>
             <h1 className="text-xl font-black text-white tracking-tight">Tracao</h1>
-            <p className="text-[10px] text-white/50 uppercase font-semibold tracking-wider">Traçabilité</p>
           </div>
         </div>
       </div>
@@ -34,8 +34,12 @@ export function SideNav() {
       {/* User profile */}
       <div className="px-4 py-5 border-b border-white/10">
         <div className="flex items-center gap-3 bg-white/5 rounded-xl p-3">
-          <div className="w-10 h-10 rounded-full bg-tracao-gold flex items-center justify-center text-tracao-choco font-black text-lg shrink-0">
-            {agriculteur.prenom.charAt(0).toUpperCase()}
+          <div className="w-10 h-10 rounded-full bg-tracao-gold flex items-center justify-center text-tracao-choco font-black text-lg shrink-0 overflow-hidden">
+            {agriculteur.photoUrl ? (
+              <img src={agriculteur.photoUrl} alt="Photo de profil" className="w-full h-full object-cover" />
+            ) : (
+              <span>{agriculteur.prenom.charAt(0).toUpperCase()}</span>
+            )}
           </div>
           <div className="overflow-hidden">
             <p className="text-sm font-bold text-white truncate">{agriculteur.prenom} {agriculteur.nom}</p>

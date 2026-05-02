@@ -77,7 +77,7 @@ export default function LoginScreen() {
   return (
     <div className="flex flex-col flex-1 p-6 bg-tracao-cream h-screen justify-center">
       <div className="text-center mb-10">
-        <div className="text-6xl mb-4">🍫</div>
+        <img src="/icon-192.png" alt="Tracao Logo" className="w-20 h-20 mx-auto mb-4 object-contain" />
         <h1 className="text-3xl font-bold text-tracao-cacao tracking-tight">Tracao</h1>
         <p className="text-tracao-choco-light mt-2 text-sm">Traçabilité de votre récolte</p>
       </div>

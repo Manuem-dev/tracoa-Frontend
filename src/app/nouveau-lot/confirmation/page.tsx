@@ -90,7 +90,7 @@ function ConfirmationContent() {
             Retour à l'accueil
           </Button>
           
-          <Button variant="outline" fullWidth onClick={() => router.push(`/lot/${lot.lotId}`)}>
+          <Button variant="outline" fullWidth onClick={() => router.push(`/lot?id=${lot.lotId}`)}>
             Voir les détails <ChevronRightIcon size={18} />
           </Button>
         </div>

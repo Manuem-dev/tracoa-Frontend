@@ -20,12 +20,12 @@ export function LotCard({ lot }: { lot: Lot }) {
 
   return (
     <Link
-      href={`/lot/${lot.lotId}`}
-      className="block w-full bg-tracao-cream-light border border-tracao-border-light rounded-2xl overflow-hidden mb-3 shadow-sm hover:shadow-md hover:scale-[1.005] transition-all"
+      href={`/lot?id=${lot.lotId}`}
+      className="block w-full max-w-full bg-tracao-cream-light border border-tracao-border-light rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:scale-[1.005] transition-all"
     >
       {/* Photo banner or emoji header */}
       {hasPhoto ? (
-        <div className="relative aspect-[5/4] sm:aspect-square w-full overflow-hidden bg-tracao-choco">
+        <div className="relative aspect-[21/9] w-full overflow-hidden bg-tracao-choco">
           <img
             src={lot.photoPath!}
             alt={`Photo du lot ${lot.lotId}`}

@@ -1,18 +1,19 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useLots } from "../../../context/LotsContext";
-import { Lot, getTypeProduitLabel, getTypeProduitEmoji, getLotStatutLabel } from "../../../types";
-import { TracaoBadge } from "../../../components/ui/TracaoBadge";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useLots } from "../../context/LotsContext";
+import { Lot, getTypeProduitLabel, getTypeProduitEmoji, getLotStatutLabel } from "../../types";
+import { TracaoBadge } from "../../components/ui/TracaoBadge";
 import { ArrowLeftIcon, CopyIcon, MapPinIcon, CheckCircle2Icon, QrCodeIcon } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
-export default function DetailLotScreen({ params }: { params: Promise<{ id: string }> }) {
+function LotDetailContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { trouverParId } = useLots();
   
-  const { id } = use(params);
+  const id = searchParams.get("id");
   const [lot, setLot] = useState<Lot | null>(null);
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function DetailLotScreen({ params }: { params: Promise<{ id: stri
     }
   }, [id, trouverParId]);
 
-  if (!lot) return <div className="p-6">Chargement...</div>;
+  if (!lot) return <div className="p-6 text-tracao-choco">Chargement du lot {id}...</div>;
 
   const dateStr = new Date(lot.dateEnregistrement).toLocaleDateString("fr-FR", {
     day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
@@ -57,6 +58,17 @@ export default function DetailLotScreen({ params }: { params: Promise<{ id: stri
       </div>
 
       <div className="p-5 flex flex-col gap-5">
+        {/* Photo du lot (si présente) */}
+        {lot.photoPath && (
+          <div className="rounded-2xl overflow-hidden border border-tracao-border shadow-sm bg-tracao-choco">
+            <img 
+              src={lot.photoPath} 
+              alt={`Lot ${lot.lotId}`} 
+              className="w-full h-32 object-cover"
+            />
+          </div>
+        )}
+
         {/* En-tête */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-tracao-border">
           <div className="flex justify-between items-start mb-4">
@@ -153,5 +165,13 @@ export default function DetailLotScreen({ params }: { params: Promise<{ id: stri
 
       </div>
     </div>
+  );
+}
+
+export default function DetailLotScreen() {
+  return (
+    <Suspense fallback={<div className="p-6 text-tracao-choco">Chargement...</div>}>
+      <LotDetailContent />
+    </Suspense>
   );
 }

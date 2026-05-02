@@ -14,6 +14,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Tracao · Traçabilité Cacao-Café",
   description: "Application de traçabilité blockchain pour agriculteurs togolais (Café & Cacao)",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Tracao",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

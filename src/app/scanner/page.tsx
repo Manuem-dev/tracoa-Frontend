@@ -65,15 +65,15 @@ export default function ScannerScreen() {
       
       // Check if it's a valid Tracao URL
       if (pathname.startsWith('/lot/')) {
-        // Automatically redirect to the lot page
-        router.push(pathname);
+        const lotId = pathname.split('/').pop();
+        router.push(`/lot?id=${lotId}`);
       } else {
         setError("Ce QR code n'est pas un code Tracao valide.");
       }
     } catch (e) {
       // If it's just raw text (e.g. LOT-1234)
       if (decodedText.startsWith('LOT-')) {
-        router.push(`/lot/${decodedText}`);
+        router.push(`/lot?id=${decodedText}`);
       } else {
         setError("Format de QR code non reconnu.");
       }
