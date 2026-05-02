@@ -21,6 +21,7 @@ export const metadata: Metadata = {
     title: "Tracao",
   },
   icons: {
+    icon: "/favicon.png",
     apple: "/apple-touch-icon.png",
   },
 };
